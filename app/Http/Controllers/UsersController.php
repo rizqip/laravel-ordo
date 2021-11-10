@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 
 class UsersController extends Controller
 {
@@ -32,18 +33,19 @@ class UsersController extends Controller
             'image' => $request->image,
         ]);
 
-        // $createUser = User::create($request->all());
-        User::create($request->all());
+        $createUser = User::create($request->all());
+        // User::create($request->all());
 
-        // if (!$createUser) {
-        //     return redirect('/users/dashboard')
-        //         ->with('alert-failed', 'Data Tidak Ditemukan !');
-        // } else {
-        //     return redirect()->view('users/dashboard')
-        //         ->with('success', 'User created successfully.');
-        // }
-        return redirect()->view('users/dashboard')
-            ->with('success', 'User created successfully.');
+        if (!$createUser) {
+            return redirect('/users/dashboard')
+                ->with('alert-failed', 'Data Tidak Ditemukan !');
+        } else {
+            // return redirect()->view('users/dashboard')
+            //     ->with('success', 'User created successfully.');
+            return json_encode($createUser);
+        }
+        // return redirect()->view('users/dashboard')
+        //     ->with('success', 'User created successfully.');
     }
 
     public function detailUser($id)
@@ -100,5 +102,20 @@ class UsersController extends Controller
             return redirect('/users/dashboard')
                 ->with('alert-success', 'Berhasil Menghapus User');
         }
+    }
+
+    public function loginUser(Request $request)
+    {
+        $input = $request->validate([
+            'email' => 'required|email:dns',
+            'password' => 'required',
+        ]);
+
+        if (Auth::attempt($input)) {
+            $request->session()->regenerate();
+            return redirect()->intended('users/dashboard');
+        }
+
+        return back()->with('failed', 'Gagal Login !');
     }
 }
